@@ -1,53 +1,62 @@
-(function(){
-// Mobile nav toggle
-const toggle = document.querySelector('.nav-toggle');
+console.log('script.js v2 loaded');
+// Smooth scroll for internal links and close mobile nav on click
+document.querySelectorAll('a[href^="#"]').forEach(link => {
+  link.addEventListener('click', e => {
+    const id = link.getAttribute('href').slice(1);
+    const target = document.getElementById(id);
+    if (target) {
+      e.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const nav = document.querySelector('.nav');
+      const toggle = document.querySelector('.nav-toggle');
+      if (nav?.classList.contains('open')) {
+        nav.classList.remove('open');
+        toggle?.setAttribute('aria-expanded', 'false');
+      }
+    }
+  });
+});
+
+// Mobile menu toggle
+const navToggle = document.querySelector('.nav-toggle');
 const nav = document.querySelector('.nav');
-if (toggle && nav) {
-toggle.addEventListener('click', ()=> nav.classList.toggle('open'));
+if (navToggle && nav) {
+  navToggle.addEventListener('click', () => {
+    const isOpen = nav.classList.toggle('open');
+    navToggle.setAttribute('aria-expanded', String(isOpen));
+  });
 }
 
-// Smooth scroll for same-page anchors
-document.querySelectorAll('a[href^="#"]').forEach(a=>{
-a.addEventListener('click', e=>{
-const id = a.getAttribute('href').slice(1);
-const el = document.getElementById(id);
-if (el) {
-e.preventDefault();
-el.scrollIntoView({ behavior:'smooth', block:'start' });
-nav && nav.classList.remove('open');
-}
-});
-});
+// Inline success messaging for Formspree
+(function () {
+  const form = document.querySelector('form#contact-form');
+  const statusEl = document.getElementById('form-status');
 
-// Optional: inline success with Formspree using AJAX (uncomment to use, otherwise form will redirect to Formspree success page)
-/*
-const form = document.getElementById('contact-form');
-const status = document.getElementById('form-status');
-if (form) {
-form.addEventListener('submit', async (e)=>{
-e.preventDefault();
-if (status) status.textContent = 'Sending...';
-try {
-const res = await fetch(form.action, {
-method:'POST',
-headers:{ 'Accept':'application/json' },
-body:new FormData(form)
-});
-if (res.ok) {
-form.reset();
-if (status) status.textContent = 'Thanks! Your message has been sent.';
-} else {
-let msg = 'Oops, something went wrong. Please try again.';
-try {
-const data = await res.json();
-if (Array.isArray(data.errors)) msg = data.errors.map(e=>e.message).join(', ');
-} catch(_){}
-if (status) status.textContent = msg;
-}
-} catch {
-if (status) status.textContent = 'Network error. Please try again.';
-}
-});
-}
-*/
+  if (!form || !statusEl) return;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    statusEl.textContent = 'Sending...';
+
+    try {
+      const formData = new FormData(form);
+
+      const response = await fetch(form.action, {
+        method: form.method || 'POST',
+        body: formData,
+        headers: { 'Accept': 'application/json' }
+      });
+
+      if (response.ok) {
+        form.reset();
+        statusEl.textContent = 'Thanks! Your message has been sent.';
+      } else {
+        const data = await response.json().catch(() => null);
+        const msg = data?.errors?.map(e => e.message).join(', ') || 'Oops, something went wrong. Please try again.';
+        statusEl.textContent = msg;
+      }
+    } catch (err) {
+      statusEl.textContent = 'Network error. Please check your connection and try again.';
+    }
+  });
 })();
